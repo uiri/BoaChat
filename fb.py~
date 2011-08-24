@@ -16,8 +16,8 @@ import os
 def get_facebook_client():
     import facebook
     # Replace these with your app's credentials
-    api_key = 'YOUR_API_KEY'
-    secret_key = 'YOUR_API_SECRET'
+    api_key = '147201912033054'
+    secret_key = '61ef5734be20d29715ef1133e9456834'
 
     client = facebook.Facebook(api_key, secret_key)
 
@@ -50,12 +50,11 @@ def get_facebook_client():
 
     return client
 
-try:
-    from pyxmpp.sasl.core import ClientAuthenticator
-    from pyxmpp.sasl.core import Response, Failure, Success
-except:
-    from pyxmpp2.sasl.core import ClientAuthenticator
-    from pyxmpp2.sasl.core import Response, Failure, Success
+from pyxmpp.sasl.core import ClientAuthenticator
+from pyxmpp.sasl.core import Response, Failure, Success
+#except:
+#    from pyxmpp2.sasl.core import ClientAuthenticator
+#    from pyxmpp2.sasl.core import Response, Failure, Success
 
 class XFacebookPlatformClientAuthenticator(ClientAuthenticator):
     def __init__(self, password_manager, fb_client=None):
@@ -69,7 +68,7 @@ class XFacebookPlatformClientAuthenticator(ClientAuthenticator):
         return Response()
 
     def challenge(self, challenge):
-        in_params = dict([part.split('=') for part in challenge.split('&amp;')])
+        in_params = dict([part.split('=') for part in challenge.split('&')])
         out_params = {'nonce': in_params['nonce']}
         out_params = self._fb_client._add_session_args(out_params)
         out_params = self._fb_client._build_post_args(in_params['method'], out_params)
@@ -79,12 +78,12 @@ class XFacebookPlatformClientAuthenticator(ClientAuthenticator):
     def finish(self,data):
         return Success(None)
 
-try:
-    from pyxmpp.all import JID, Presence, Message
-    from pyxmpp.client import Client
-except:
-    from pyxmpp2 import presence, jid, message
-    from pyxmpp2.client import Client
+#try:
+from pyxmpp.all import JID, Presence, Message
+from pyxmpp.client import Client
+#except:
+#    from pyxmpp2 import presence, jid, message
+#    from pyxmpp2.client import Client
 
 class FacebookChatClient(Client):
     def __init__(self, to_uid, message, **kwargs):
@@ -94,7 +93,7 @@ class FacebookChatClient(Client):
         self.sent = False
 
     def session_started(self):
-        self.get_stream().set_message_handler(`chat`, self.got_message)
+        self.get_stream().set_message_handler('chat', self.got_message)
         self.get_stream().send(Presence())
 
     def idle(self):
@@ -118,14 +117,14 @@ if __name__ == '__main__':
     #logger.setLevel(logging.DEBUG)
 
     # Sneak our authenticator into the map.
-    try:
-        import pyxmpp.sasl
-        pyxmpp.sasl.all_mechanisms_dict['X-FACEBOOK-PLATFORM'] = \
+    #try:
+    import pyxmpp.sasl
+    pyxmpp.sasl.all_mechanisms_dict['X-FACEBOOK-PLATFORM'] = \
             (XFacebookPlatformClientAuthenticator, None)
-    except:
-        import pyxmpp2.sasl
-        pyxmpp2.sasl.all_mechanisms_dict['X-FACEBOOK-PLATFORM'] = \
-            (XFacebookPlatformClientAuthenticator, None)
+    #except:
+    #    import pyxmpp2.sasl
+    #    pyxmpp2.sasl.all_mechanisms_dict['X-FACEBOOK-PLATFORM'] = \
+    #        (XFacebookPlatformClientAuthenticator, None)
 
     print 'Preparing Facebook client...'
     global_fb_client = get_facebook_client()

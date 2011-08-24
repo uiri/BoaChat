@@ -59,6 +59,7 @@ from pyxmpp.sasl.core import Response, Failure, Success
 class XFacebookPlatformClientAuthenticator(ClientAuthenticator):
     def __init__(self, password_manager, fb_client=None):
         ClientAuthenticator.__init__(self, password_manager)
+        print fb_client
         if fb_client is None:
             global global_fb_client
             fb_client = global_fb_client
@@ -97,7 +98,7 @@ class FacebookChatClient(Client):
         self.get_stream().send(Presence())
 
     def idle(self):
-        print 'Idle...'
+        #print 'Idle...'
         Client.idle(self)
         if self.session_established and not self.sent:
             self.sent = True
