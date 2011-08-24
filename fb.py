@@ -68,7 +68,7 @@ class XFacebookPlatformClientAuthenticator(ClientAuthenticator):
         return Response()
 
     def challenge(self, challenge):
-        in_params = dict([part.split('=') for part in challenge.split('&amp;')])
+        in_params = dict([part.split('=') for part in challenge.split('&')])
         out_params = {'nonce': in_params['nonce']}
         out_params = self._fb_client._add_session_args(out_params)
         out_params = self._fb_client._build_post_args(in_params['method'], out_params)
@@ -117,14 +117,14 @@ if __name__ == '__main__':
     #logger.setLevel(logging.DEBUG)
 
     # Sneak our authenticator into the map.
-    try:
-        import pyxmpp.sasl
-        pyxmpp.sasl.all_mechanisms_dict['X-FACEBOOK-PLATFORM'] = \
+    #try:
+    import pyxmpp.sasl
+    pyxmpp.sasl.all_mechanisms_dict['X-FACEBOOK-PLATFORM'] = \
             (XFacebookPlatformClientAuthenticator, None)
-    except:
-        import pyxmpp2.sasl
-        pyxmpp2.sasl.all_mechanisms_dict['X-FACEBOOK-PLATFORM'] = \
-            (XFacebookPlatformClientAuthenticator, None)
+    #except:
+    #    import pyxmpp2.sasl
+    #    pyxmpp2.sasl.all_mechanisms_dict['X-FACEBOOK-PLATFORM'] = \
+    #        (XFacebookPlatformClientAuthenticator, None)
 
     print 'Preparing Facebook client...'
     global_fb_client = get_facebook_client()
