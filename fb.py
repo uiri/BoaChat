@@ -16,8 +16,8 @@ import os
 def get_facebook_client():
     import facebook
     # Replace these with your app's credentials
-    api_key = '145515482164907'
-    secret_key = ''
+    api_key = '147201912033054'
+    secret_key = '61ef5734be20d29715ef1133e9456834'
 
     client = facebook.Facebook(api_key, secret_key)
 
