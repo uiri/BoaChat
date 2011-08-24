@@ -93,7 +93,7 @@ class FacebookChatClient(Client):
         self.sent = False
 
     def session_started(self):
-        self.get_stream().set_message_handler(`chat`, self.got_message)
+        self.get_stream().set_message_handler('chat', self.got_message)
         self.get_stream().send(Presence())
 
     def idle(self):
