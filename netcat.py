@@ -7,4 +7,5 @@ uid = sys.stdin.readline()
 print "First message:"
 mess = sys.stdin.readline()
 client = fbchatlib.get_facebook_client()
-fbchatlib.setupChat(client, uid.strip(), mess.strip())
+xmpp_client = fbchatlib.setup_chat(client, uid.strip(), mess.strip())
+xmpp_client.connect_and_loop()

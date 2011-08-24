@@ -9,8 +9,7 @@
 # Facebook session.  For newer-style or web apps, only the
 # `get_facebook_client` function should have to change.
 
-import sys
-import os
+import sys, os, threading
 
 
 def get_facebook_client():
@@ -98,9 +97,7 @@ class FacebookChatClient(Client):
 
         def got_message(self, stanza):
                 print stanza.get_from().node, ':', stanza.get_body()
-                if(stanza.get_body() != None):
-                        self.send_message(stanza.get_from().node,  "Is a faggot")
-                else:
+                if(stanza.get_body() == None):
                         print str(stanza.get_from().node) + " is typing..."
 		
 		#stanza.get_from().node is their UUID
@@ -109,9 +106,25 @@ class FacebookChatClient(Client):
                 target = JID('-' + self.to_uid, self.jid.domain)
                 self.get_stream().send(Message(to_jid=target, body=unicode(msg)))
 
+        def connect_and_loop(self):
+                print 'Connecting...'
+                self.connect()
+                
+                print 'Processing...'
+                writethread = threading.Thread(target=self.sendpoll)
+                writethread.daemon = True
+                writethread.start()
+                try:
+                        self.loop(1)
+                finally:
+                        self.disconnect()
 
+        def sendpoll(self):
+                while 1:
+                        msg = sys.stdin.readline()
+                        self.send_message(self.to_uid, msg)
 
-def setupChat(fb_client, uidarg=None, messarg=None):
+def setup_chat(fb_client, uidarg=None, messarg=None):
         global global_fb_client
         global_fb_client = fb_client
         import pyxmpp.sasl
@@ -140,16 +153,8 @@ def setupChat(fb_client, uidarg=None, messarg=None):
                 auth_methods = ['sasl:X-FACEBOOK-PLATFORM'],
                 #server = 'localhost'
                 )
+        return xmpp_client
 
-        print 'Connecting...'
-        xmpp_client.connect()
-
-        print 'Processing...'
-        try:
-                xmpp_client.loop(1)
-        finally:
-                xmpp_client.disconnect()
-	
 if __name__ == "__main__":
         print 'Preparing Facebook client...'
         global_fb_client = get_facebook_client()
