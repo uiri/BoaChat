@@ -68,13 +68,13 @@ from pyxmpp.all import JID, Presence, Message
 from pyxmpp.client import Client
 
 class FacebookChatClient(Client):
-    def __init__(self, chatbuff, **kwargs):
+    def __init__(self, chatbuff=None, **kwargs):
         Client.__init__(self, **kwargs)
-        self.buffer = chatbuff
 
     def session_started(self):
         self.get_stream().set_message_handler('chat', self.got_message)
-        self.get_stream().send(Presence())
+        p = Presence()
+        self.get_stream().send(p)
 
     #HANDLER FOR A RECEIVED MESSAGE
     def got_message(self, stanza):
@@ -92,7 +92,7 @@ class FacebookChatClient(Client):
 
     def connect_and_loop(self):
         print 'Connecting...'
-        self.connect()         
+        self.connect()
         print 'Processing...'
         try:
             self.loop(1)
@@ -122,5 +122,5 @@ def setup_chat(fb_client, buffr, uidarg=None, messarg=None):
 if __name__ == "__main__":
     print 'Preparing Facebook client...'
     global_fb_client = get_facebook_client()
-    asd = setup_chat(global_fb_client)
+    asd = setup_chat(global_fb_client, None)
     asd.connect_and_loop()
