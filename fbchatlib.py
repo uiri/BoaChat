@@ -68,30 +68,26 @@ from pyxmpp.all import JID, Presence, Message
 from pyxmpp.client import Client
 
 class FacebookChatClient(Client):
-    def __init__(self, to_uid, message, **kwargs):
+    def __init__(self, chatbuff, **kwargs):
         Client.__init__(self, **kwargs)
-        self.to_uid = to_uid
-        self.message = message
-        self.sent = False
+        self.buffer = chatbuff
 
     def session_started(self):
         self.get_stream().set_message_handler('chat', self.got_message)
         self.get_stream().send(Presence())
 
-    def idle(self):
-        Client.idle(self)
-
     #HANDLER FOR A RECEIVED MESSAGE
     def got_message(self, stanza):
+        buffr = self.buffer.get_text()
         stanza_body = stanza.get_body()
         if(stanza_body == None):
-            print str(stanza.get_from().node) + " is typing..."
+            self.buffer.set_text(buffr + str(stanza.get_from().node) + " is typing...\n")
         else:
-            print stanza.get_from().node, ':', stanza_body
+            self.buffer.set_text(buffr + stanza.get_from().node, ':', stanza_body + "\n")
 		#stanza.get_from().node is their UID
 
     def send_message(self,uid,msg):
-        target = JID('-' +  to_uid, self.jid.domain)
+        target = JID('-' +  uid, self.jid.domain)
         self.get_stream().send(Message(to_jid=target, body=unicode(msg)))
 
     def connect_and_loop(self):
@@ -103,31 +99,18 @@ class FacebookChatClient(Client):
         finally:
             self.disconnect()
 
-    def sendpoll(self):
-        while 1:
-            msg = sys.stdin.readline()
-            if msg.strip() != '/quit':
-                self.send_message(self.to_uid, msg)
-            else:
-                self.disconnect()
-
-def setup_chat(fb_client, uidarg=None, messarg=None):
+def setup_chat(fb_client, buffr, uidarg=None, messarg=None):
     global global_fb_client
     global_fb_client = fb_client
-    try:
-        import pyxmpp.sasl
-        pyxmpp.sasl.all_mechanisms_dict['X-FACEBOOK-PLATFORM'] = (XFacebookPlatformClientAuthenticator, None)
-    except:
-        import pyxmpp2.sasl
-        pyxmpp2.sasl.all_mechanisms_dict['X-FACEBOOK-PLATFORM'] = (XFacebookPlatformClientAuthenticator, None)
+    import pyxmpp.sasl
+    pyxmpp.sasl.all_mechanisms_dict['X-FACEBOOK-PLATFORM'] = (XFacebookPlatformClientAuthenticator, None)
 
     my_uid = str(global_fb_client.uid)
     my_jid = '-' + my_uid + '@chat.facebook.com/TestClient'
 
     print 'Creating stream...'
     xmpp_client = FacebookChatClient(
-            to_uid = None,
-            message = None,
+            chatbuff = buffr,
             jid = JID(my_jid),
             password = u'ignored',
             auth_methods = ['sasl:X-FACEBOOK-PLATFORM'],

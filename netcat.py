@@ -1,6 +1,5 @@
 import fbchatlib, sys
 
-
 print "Put in the UID of who you want to talk to:"
 uid = sys.stdin.readline()
 client = fbchatlib.get_facebook_client()
