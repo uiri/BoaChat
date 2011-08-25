@@ -64,7 +64,7 @@ class XFacebookPlatformClientAuthenticator(ClientAuthenticator):
     def finish(self,data):
         return Success(None)
 
-from pyxmpp.all import JID, Presence, Message
+from pyxmpp.all import JID, Presence, Message, Iq
 from pyxmpp.client import Client
 
 class FacebookChatClient(Client):
@@ -73,6 +73,7 @@ class FacebookChatClient(Client):
 
     def session_started(self):
         self.get_stream().set_message_handler('chat', self.got_message)
+        print self.get_roster()
         p = Presence()
         self.get_stream().send(p)
 
@@ -98,6 +99,22 @@ class FacebookChatClient(Client):
             self.loop(1)
         finally:
             self.disconnect()
+
+    def get_roster(self):
+        """Request the user's roster."""
+        stream=self.get_stream()
+        iq=Iq(stanza_type="get")
+        iq.new_query("jabber:iq:roster")
+        try:
+            self.__roster_result(iq)
+        except:
+            self.__roster_error()
+#        stream.set_response_handlers(iq,
+#            self.__roster_result,self.__roster_error,self.__roster_timeout)
+        stream.set_iq_set_handler("query","jabber:iq:roster",self.__roster_push\
+)
+        stream.send(iq)
+        return self.roster
 
 def setup_chat(fb_client, buffr, uidarg=None, messarg=None):
     global global_fb_client
