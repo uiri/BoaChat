@@ -96,10 +96,11 @@ class FacebookChatClient(Client):
                         self.get_stream().send(Message(to_jid=target, body=unicode(self.message)))
 
         def got_message(self, stanza):
-                print stanza.get_from().node, ':', stanza.get_body()
-                if(stanza.get_body() == None):
+                stanza_body = stanza.get_body()
+                if(stanza_body == None):
                         print str(stanza.get_from().node) + " is typing..."
-		
+                else:
+                        print stanza.get_from().node, ':', stanza_body
 		#stanza.get_from().node is their UUID
 	
         def send_message(self,uid,msg):
@@ -122,7 +123,10 @@ class FacebookChatClient(Client):
         def sendpoll(self):
                 while 1:
                         msg = sys.stdin.readline()
-                        self.send_message(self.to_uid, msg)
+                        if msg.strip() != '/quit':
+                                self.send_message(self.to_uid, msg)
+                        else:
+                                self.disconnect()
 
 def setup_chat(fb_client, uidarg=None, messarg=None):
         global global_fb_client
@@ -136,10 +140,6 @@ def setup_chat(fb_client, uidarg=None, messarg=None):
                         to_uid = sys.argv[1]
                 else:
                         to_uid = uidarg
-                if messarg == None:
-                        message = sys.argv[2]
-                else:
-                        message = unicode(messarg)
                 my_jid = '-' + my_uid + '@chat.facebook.com/TestClient'
         except IndexError:
                 sys.exit('usage: %s {to_uid} {message}' % sys.argv[0])
@@ -147,7 +147,7 @@ def setup_chat(fb_client, uidarg=None, messarg=None):
         print 'Creating stream...'
         xmpp_client = FacebookChatClient(
                 to_uid = to_uid,
-                message = message,
+                message = None,
                 jid = JID(my_jid),
                 password = u'ignored',
                 auth_methods = ['sasl:X-FACEBOOK-PLATFORM'],
