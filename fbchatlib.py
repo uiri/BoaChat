@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import sys, os, threading
+import sys, os, threading, re
 
 def get_facebook_client():
     import facebook
@@ -64,26 +64,48 @@ class XFacebookPlatformClientAuthenticator(ClientAuthenticator):
     def finish(self,data):
         return Success(None)
 
-from pyxmpp.all import JID, Presence, Message
+from pyxmpp.all import JID, Presence, Message, Iq
 from pyxmpp.client import Client
 
 class FacebookChatClient(Client):
-    def __init__(self, chatbuff, **kwargs):
+    def __init__(self, chatbuff=None, **kwargs):
         Client.__init__(self, **kwargs)
-        self.buffer = chatbuff
 
     def session_started(self):
         self.get_stream().set_message_handler('chat', self.got_message)
-        self.get_stream().send(Presence())
+        self.request_roster()
+        p = Presence()
+        self.get_stream().send(p)
+    
+    def roster_handler(self):
+        roster = str(self.roster)
+        roster = roster.replace("<query>","")
+        roster = roster.replace("</query>","")
+        roster = roster.replace("<item jid=\"","")
+        roster = roster.replace("@chat.facebook.com\" name=\"",":")
+        roster = roster.replace("\" subscription=\"both\"/>",",")
+        roster_array = roster.split(",")
+        i = 0
+        while(i < len(roster_array)):
+                roster_array[i] = roster_array[i].split(":")
+                i += 1
+        print roster_array
+        return roster_array
+    
+    def idle(self):
+        Client.idle(self)
+        self.roster_handler()	
 
     #HANDLER FOR A RECEIVED MESSAGE
     def got_message(self, stanza):
-        buffr = self.buffer.get_text()
+        #buffr = self.buffer.get_text()
         stanza_body = stanza.get_body()
         if(stanza_body == None):
-            self.buffer.set_text(buffr + str(stanza.get_from().node) + " is typing...\n")
+            #self.buffer.set_text(buffr + str(stanza.get_from().node) + " is typing...\n")
+            print str(stanza.get_from().node) + " is typing...\n"
         else:
-            self.buffer.set_text(buffr + stanza.get_from().node, ':', stanza_body + "\n")
+            #self.buffer.set_text(buffr + stanza.get_from().node, ':', stanza_body + "\n")
+            print stanza.get_from().node, ':', stanza_body + "\n"
 		#stanza.get_from().node is their UID
 
     def send_message(self,uid,msg):
@@ -92,7 +114,7 @@ class FacebookChatClient(Client):
 
     def connect_and_loop(self):
         print 'Connecting...'
-        self.connect()         
+        self.connect()
         print 'Processing...'
         try:
             self.loop(1)
@@ -122,5 +144,5 @@ def setup_chat(fb_client, buffr, uidarg=None, messarg=None):
 if __name__ == "__main__":
     print 'Preparing Facebook client...'
     global_fb_client = get_facebook_client()
-    asd = setup_chat(global_fb_client)
+    asd = setup_chat(global_fb_client, None)
     asd.connect_and_loop()
