@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
-import sys, os, threading, re
+import sys, os, threading, re, time
+from datetime import datetime
 
 def get_facebook_client():
     import facebook
@@ -35,8 +36,14 @@ def get_facebook_client():
                 api_key = client.api_key,
                 v = '1.0'))
         print 'Grant the extended permission to the app in your browser, then press enter.'
-        raw_input()
-
+        
+        #This prevents the raw_input() call
+        #used to wait for uses to authenticate
+        while(1):
+            if int(client.users.hasAppPermission('xmpp_login')):
+                time.sleep(2) #Sleep for 2 seconds
+            else:
+                break
     return client
 
 from pyxmpp.sasl.core import ClientAuthenticator
@@ -81,36 +88,53 @@ class FacebookChatClient(Client):
         roster = str(self.roster)
         roster = roster.replace("<query>","")
         roster = roster.replace("</query>","")
-        roster = roster.replace("<item jid=\"","")
+        roster = roster.replace("<item jid=\"-","")
         roster = roster.replace("@chat.facebook.com\" name=\"",":")
         roster = roster.replace("\" subscription=\"both\"/>",",")
         roster_array = roster.split(",")
         i = 0
         while(i < len(roster_array)):
-                roster_array[i] = roster_array[i].split(":")
-                i += 1
-        print roster_array
+            roster_array[i] = roster_array[i].split(":")
+            i += 1
         return roster_array
     
     def idle(self):
         Client.idle(self)
-        self.roster_handler()	
+        self.roster_handler()
 
     #HANDLER FOR A RECEIVED MESSAGE
     def got_message(self, stanza):
         #buffr = self.buffer.get_text()
         stanza_body = stanza.get_body()
+        stanza_node = str(stanza.get_from().node).replace("-","")
         if(stanza_body == None):
-            #self.buffer.set_text(buffr + str(stanza.get_from().node) + " is typing...\n")
             print str(stanza.get_from().node) + " is typing...\n"
         else:
             #self.buffer.set_text(buffr + stanza.get_from().node, ':', stanza_body + "\n")
-            print stanza.get_from().node, ':', stanza_body + "\n"
+            print  stanza_node+ "[" + str(datetime.now()) + "]" + stanza_body
+            self.write_log(stanza_node  ,datetime.now(),stanza_body)
 		#stanza.get_from().node is their UID
 
     def send_message(self,uid,msg):
         target = JID('-' +  uid, self.jid.domain)
         self.get_stream().send(Message(to_jid=target, body=unicode(msg)))
+
+    def write_log(self,uid,time,msg):
+#
+#        **********************
+#        THIS NEEDS TO BE FIXED
+#        **********************
+#
+#        if(not str(os.curdir).endswith("logs")):
+#            if(os.path.exists("logs")):
+#                os.chdir("logs")
+#            else:
+#                os.mkdir("logs")
+#                os.chdir("logs")
+        _file = open(uid+"_log.txt","w")
+        _file.write(uid+" ["+str(time)+"]"+str(msg))
+        _file.close()
+    
 
     def connect_and_loop(self):
         print 'Connecting...'
