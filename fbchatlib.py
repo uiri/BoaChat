@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import sys, os, threading
+import sys, os, threading, re
 
 def get_facebook_client():
     import facebook
@@ -77,19 +77,35 @@ class FacebookChatClient(Client):
         p = Presence()
         self.get_stream().send(p)
     
+    def roster_handler(self):
+        roster = str(self.roster)
+        roster = roster.replace("<query>","")
+        roster = roster.replace("</query>","")
+        roster = roster.replace("<item jid=\"","")
+        roster = roster.replace("@chat.facebook.com\" name=\"",":")
+        roster = roster.replace("\" subscription=\"both\"/>",",")
+        roster_array = roster.split(",")
+        i = 0
+        while(i < len(roster_array)):
+                roster_array[i] = roster_array[i].split(":")
+                i += 1
+        print roster_array
+        return roster_array
+    
     def idle(self):
         Client.idle(self)
-        #send signal to update roster here. kthnx
-        #callback function should go in gui script?
+        self.roster_handler()	
 
     #HANDLER FOR A RECEIVED MESSAGE
     def got_message(self, stanza):
-        buffr = self.buffer.get_text()
+        #buffr = self.buffer.get_text()
         stanza_body = stanza.get_body()
         if(stanza_body == None):
-            self.buffer.set_text(buffr + str(stanza.get_from().node) + " is typing...\n")
+            #self.buffer.set_text(buffr + str(stanza.get_from().node) + " is typing...\n")
+            print str(stanza.get_from().node) + " is typing...\n"
         else:
-            self.buffer.set_text(buffr + stanza.get_from().node, ':', stanza_body + "\n")
+            #self.buffer.set_text(buffr + stanza.get_from().node, ':', stanza_body + "\n")
+            print stanza.get_from().node, ':', stanza_body + "\n"
 		#stanza.get_from().node is their UID
 
     def send_message(self,uid,msg):
