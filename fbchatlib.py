@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import sys, os, threading, re, gobject
+import sys, os, threading, re, gobject, time
 from datetime import datetime
 
 def get_facebook_client():
@@ -33,6 +33,18 @@ def get_facebook_client():
         print >> handle, client.secret
         handle.close()
 
+    if not int(client.users.hasAppPermission('xmpp_login')):
+        import webbrowser
+        webbrowser.open(client.get_url('authorize',
+            ext_perm = 'xmpp_login',
+            api_key = client.api_key,
+            v = '1.0'))
+            
+    while(1):
+    	if (not int(client.users.hasAppPermission('xmpp_login'))):
+    	    print "No xmpp permission"
+        else:
+            break
     return client
 
 from pyxmpp.sasl.core import ClientAuthenticator
@@ -80,6 +92,7 @@ class FacebookChatClient(Client):
         querymatch = re.compile(".query(.+)roster..<item jid=\"-")
         roster = querymatch.sub("", roster)
         roster = roster.replace("</item></query>","")
+        roster = roster.replace("</query>","")
         roster = roster.replace("<item jid=\"-",",")
         roster = roster.replace("</item>", "")
         roster = roster.replace("@chat.facebook.com\" name=\"",":")
