@@ -80,6 +80,7 @@ class FacebookChatClient(Client):
         querymatch = re.compile(".query(.+)roster..<item jid=\"-")
         roster = querymatch.sub("", roster)
         roster = roster.replace("</item></query>","")
+        roster = roster.replace("</query>", "")
         roster = roster.replace("<item jid=\"-",",")
         roster = roster.replace("</item>", "")
         roster = roster.replace("@chat.facebook.com\" name=\"",":")
