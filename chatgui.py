@@ -13,7 +13,36 @@ def send_message_gui(first, second, third, fourth):
 
 def print_roster(client):
     time.sleep(7)
-    client.roster_handler()
+    roster_array = client.roster_handler()
+    group_list = []
+    for i in roster_array:
+        if len(i) > 2:
+            groups = True
+    storearray = []
+    if groups:
+        grouplist = ['Friends']
+    for i in roster_array:
+        if groups:
+            try:
+                storearray.append([i[1], i[2]])
+                try:
+                    grouplist.index(i[2])
+                except:
+                    grouplist.append(i[2])
+            except:
+                storearray.append([i[1], "Friends"])
+        else:
+            storearray.append(i[1])
+    if groups:
+        groupstoredict = {}
+        for g in grouplist:
+            treeiter = rosterstore.append(None, [g])
+            groupstoredict[g] = treeiter
+    for i in storearray:
+        if groups:
+            rosterstore.append(groupstoredict[i[1]], [i[0]])
+        else:
+            rosterstore.append(None, [i])
 
 mainwindow = gtk.Window()
 mainwindow.set_default_size(500,500)
@@ -34,7 +63,8 @@ rosterscroll = gtk.ScrolledWindow(None, None)
 rosterscroll.set_policy(gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC)
 rosterscroll.add(rosterview)
 rostercell = gtk.CellRendererText()
-
+rostercolumn = gtk.TreeViewColumn("Friend", rostercell, text=0)
+rosterview.append_column(rostercolumn)
 
 client = fbchatlib.get_facebook_client()
 xmpp_client = fbchatlib.setup_chat(client, mainbuffer)
@@ -49,7 +79,7 @@ mainscroll.add(mainview)
 mainscroll.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
 chatbox.pack_start(mainscroll, True, True, 0)
 chatbox.pack_start(chathbox, False, False, 0)
-mainbox.pack_start(rosterscroll, True, False, 0)
+mainbox.pack_start(rosterscroll, False, False, 0)
 mainbox.pack_start(chatbox, True, True, 0)
 mainwindow.add(mainbox)
 mainwindow.show_all()

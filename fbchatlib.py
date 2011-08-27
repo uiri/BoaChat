@@ -18,7 +18,7 @@ def get_facebook_client():
         client.uid, client.session_key, client.secret = [ line.strip() for line in handle ]
         handle.close()
     except IOError:
-        print client.auth.createToken()
+        client.auth.createToken()
         client.login()
         print 'Log in to the app in your browser, then press enter.'
         while(1):
@@ -68,6 +68,8 @@ class FacebookChatClient(Client):
         Client.__init__(self, **kwargs)
         if chatbuff != None:
             self.buffr = chatbuff
+        self.roster_array = []
+        self.nametouid = None
 
     def session_started(self):
         self.get_stream().set_message_handler('chat', self.got_message)
@@ -89,15 +91,20 @@ class FacebookChatClient(Client):
         roster = roster.replace("</group>", "")
         roster = roster.replace("<group>", ":")
         tmp_roster_array = roster.split(",")
-        roster_array = []
         for i in tmp_roster_array:
             i = i.split(":")
-            roster_array.append(i)
-        return roster_array
-    
+            self.roster_array.append(i)
+        dictarray = []
+        for i in self.roster_array:
+            if len(i) > 2:
+                dictarray.append([i[0], i[1]])
+            else:
+                dictarray.append(i)
+        self.nametouid = dict(dictarray)
+        return self.roster_array
+
     def idle(self):
         Client.idle(self)
-        #send signal to list view to update roster
 
     #HANDLER FOR A RECEIVED MESSAGE
     def got_message(self, stanza):
@@ -107,18 +114,22 @@ class FacebookChatClient(Client):
             buffr = None
         stanza_body = stanza.get_body()
         stanza_node = str(stanza.get_from().node).replace("-","")
+        try:
+            name = self.nametouid[stanza_node]
+        except:
+            name = stanza_node
         if(stanza_body == None):
             #gui to show this as tooltip? show/hide dynamic element below buffer?
             if buffr == None:
-                print stanza_node + " is typing...\n"
+                print name + " is typing...\n"
         else:
-            msgtxt = "[" + datetime.now().strftime("%H:%M:%S") + "] <" + stanza_node + "> " + stanza_body + "\n"
+            msgtxt = "[" + datetime.now().strftime("%H:%M:%S") + "] <" + name + "> " + stanza_body + "\n"
             if buffr != None:
                 addtext = buffr + msgtxt
                 gobject.idle_add(self.buffr.set_text, addtext)
             else:
                 print msgtxt
-            logtext = "[" + datetime.now().strftime("%b %d %Y %H:%M:%S") + "] <" + stanza_node + "> " + stanza_body +"\n"
+            logtext = "[" + datetime.now().strftime("%b %d %Y %H:%M:%S") + "] <" + name + "> " + stanza_body +"\n"
             self.write_log(stanza_node, logtext)
 		#stanza.get_from().node is their UID
 
