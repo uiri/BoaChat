@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import sys, os, threading, re, gobject
+import sys, os, threading, re, gobject, urllib
 from datetime import datetime
 
 def get_facebook_client():
@@ -78,11 +78,12 @@ from pyxmpp.all import JID, Presence, Message, Iq
 from pyxmpp.client import Client
 
 class FacebookChatClient(Client):
-    def __init__(self, chatbuff=None, **kwargs):
+    def __init__(self, chatbuff=None, myuid=None, **kwargs):
         Client.__init__(self, **kwargs)
         if chatbuff != None:
             self.buffr = chatbuff
         self.roster_array = []
+        self.myuid = myuid
         self.nametouid = None
 
     def session_started(self):
@@ -128,10 +129,14 @@ class FacebookChatClient(Client):
             buffr = None
         stanza_body = stanza.get_body()
         stanza_node = str(stanza.get_from().node).replace("-","")
-        try:
-            name = self.nametouid[stanza_node]
-        except:
-            name = stanza_node
+        if stanza_node == self.myuid:
+            idre = re.compile(".,(.+)$")
+            name = idre.sub("", urllib.urlopen("http://graph.facebook.com/" + stanza_node + "?fields=name").read().replace("""{"name":\"""", ""))
+        else:
+            try:
+                name = self.nametouid[stanza_node]
+            except:
+                name = stanza_node
         if(stanza_body == None):
             #gui to show this as tooltip? show/hide dynamic element below buffer?
             if buffr == None:
@@ -150,6 +155,7 @@ class FacebookChatClient(Client):
     def send_message(self,uid,msg):
         target = JID('-' +  uid, self.jid.domain)
         self.get_stream().send(Message(to_jid=target, body=unicode(msg)))
+        self.got_message(Message(to_jid=target, body=unicode(msg), from_jid=self.jid))
 
     def write_log(self,uid,logtext):
 #
@@ -177,7 +183,7 @@ class FacebookChatClient(Client):
         finally:
             self.disconnect()
 
-def setup_chat(fb_client, buffr=None, uidarg=None, messarg=None):
+def setup_chat(fb_client, buffr=None):
     global global_fb_client
     global_fb_client = fb_client
     import pyxmpp.sasl
@@ -189,6 +195,7 @@ def setup_chat(fb_client, buffr=None, uidarg=None, messarg=None):
     print 'Creating stream...'
     xmpp_client = FacebookChatClient(
             chatbuff = buffr,
+            myuid = my_uid,
             jid = JID(my_jid),
             password = u'ignored',
             auth_methods = ['sasl:X-FACEBOOK-PLATFORM'],

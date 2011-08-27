@@ -23,13 +23,27 @@ def delete_event(something, els):
 def destroy_window(lol):
     gtk.main_quit()
 
-def send_message_gui(first, second, third, fourth):
-    xmpp_client.send_message(third, fourth)
+def send_message_gui(whatever):
+    try:
+        rosterrow, rosterdata = rosterview.get_selection().get_selected()
+        touid = nametouid[rosterrow.get_value(rosterdata, 0)]
+    except:
+        raise
+    xmpp_client.send_message(touid,mainmessage.get_text())
+    mainmessage.set_text("")
 
 def print_roster(client):
     time.sleep(7)
     roster_array = client.roster_handler()
     group_list = []
+    dictarray = []
+    for i in roster_array:
+        if len(i) > 2:
+            dictarray.append([i[1], i[0]])
+        else:
+            dictarray.append(i)
+    global nametouid
+    nametouid = dict(dictarray)
     for i in roster_array:
         if len(i) > 2:
             groups = True
@@ -68,6 +82,7 @@ chatbox = gtk.VBox(False, 0)
 mainscroll = gtk.ScrolledWindow()
 mainbuffer = gtk.TextBuffer()
 mainview = gtk.TextView(mainbuffer)
+mainview.set_wrap_mode(gtk.WRAP_WORD)
 chathbox = gtk.HBox(False, 0)
 mainmessage = gtk.Entry()
 mainbutton = gtk.Button('Send')
@@ -84,8 +99,8 @@ rosterview.append_column(rostercolumn)
 client = fbchatlib.get_facebook_client()
 xmpp_client = fbchatlib.setup_chat(client, mainbuffer)
 
-mainbutton.connect("clicked", send_message_gui, xmpp_client, None, mainmessage.get_text())
-mainmessage.connect("activate", send_message_gui, xmpp_client, None, mainmessage.get_text())
+mainbutton.connect("clicked", send_message_gui)
+mainmessage.connect("activate", send_message_gui)
 
 mainview.set_editable(False)
 chathbox.pack_start(mainmessage, True, True, 0)
