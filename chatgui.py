@@ -32,8 +32,12 @@ def send_message_gui(whatever):
     xmpp_client.send_message(touid,mainmessage.get_text())
     mainmessage.set_text("")
 
-def print_roster(client):
-    time.sleep(7)
+def fill_roster(client):
+    while(1):
+        if client.roster != None:
+            break
+        else:
+            pass
     roster_array = client.roster_handler()
     group_list = []
     dictarray = []
@@ -82,7 +86,7 @@ chatbox = gtk.VBox(False, 0)
 mainscroll = gtk.ScrolledWindow()
 mainbuffer = gtk.TextBuffer()
 mainview = gtk.TextView(mainbuffer)
-mainview.set_wrap_mode(gtk.WRAP_WORD)
+mainview.set_wrap_mode(gtk.WRAP_WORD_CHAR)
 chathbox = gtk.HBox(False, 0)
 mainmessage = gtk.Entry()
 mainbutton = gtk.Button('Send')
@@ -116,7 +120,7 @@ mainwindow.show_all()
 loopthread = threading.Thread(target=xmpp_client.connect_and_loop)
 loopthread.daemon = True
 loopthread.start()
-rosterthread = threading.Thread(target=print_roster, kwargs={'client' : xmpp_client})
+rosterthread = threading.Thread(target=fill_roster, kwargs={'client' : xmpp_client})
 rosterthread.daemon = True
 rosterthread.start()
 gtk.main()
