@@ -85,9 +85,12 @@ class FacebookChatClient(Client):
         self.roster_array = []
         self.myuid = myuid
         self.nametouid = None
+        self.online, self.offline = [], []
 
     def session_started(self):
         self.get_stream().set_message_handler('chat', self.got_message)
+        self.get_stream().set_presence_handler(None, self.got_presence)
+        self.get_stream().set_presence_handler('unavailable', self.lost_presence)
         self.request_roster()
         p = Presence()
         self.get_stream().send(p)
@@ -120,6 +123,32 @@ class FacebookChatClient(Client):
 
     def idle(self):
         Client.idle(self)
+
+    def got_presence(self, stanza):
+        frommatch = re.compile("<(.+)from..\-")
+        stanza_node = frommatch.sub("", str(stanza.xmlnode))
+        chatmatch = re.compile("@chat(.+)$")
+        stanza_node = chatmatch.sub("", stanza_node)
+        self.online.append(stanza_node)
+        try:
+            self.offline.index(stanza_node)
+            self.offline.remove(stanza_node)
+        except:
+            pass
+        print stanza_node
+
+    def lost_presence(self, stanza):
+        frommatch = re.compile("<(.+)from..\-")
+        stanza_node = frommatch.sub("", str(stanza.xmlnode))
+        chatmatch = re.compile("@chat(.+)$")
+        stanza_node = chatmatch.sub("", stanza_node)
+        self.offline.append(stanza_node)
+        try:
+            self.online.index(stanza_node)
+            self.online.remove(stanza_node)
+        except:
+            pass
+        print stanza_node
 
     #HANDLER FOR A RECEIVED MESSAGE
     def got_message(self, stanza):
