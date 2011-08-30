@@ -78,13 +78,17 @@ from pyxmpp.all import JID, Presence, Message, Iq
 from pyxmpp.client import Client
 
 class FacebookChatClient(Client):
-    def __init__(self, chatbuff=None, myuid=None, **kwargs):
+    def __init__(self, chatbuff=None, myuid=None, store=None, **kwargs):
         Client.__init__(self, **kwargs)
         if chatbuff != None:
             self.buffr = chatbuff
+        if myuid != None:
+            self.myuid = myuid
+        if store != None:
+            self.store = store
         self.roster_array = []
-        self.myuid = myuid
         self.nametouid = None
+        
         self.online, self.offline = [], []
 
     def session_started(self):
@@ -212,7 +216,7 @@ class FacebookChatClient(Client):
         finally:
             self.disconnect()
 
-def setup_chat(fb_client, buffr=None):
+def setup_chat(fb_client, buffr=None, store=None):
     global global_fb_client
     global_fb_client = fb_client
     import pyxmpp.sasl
@@ -225,6 +229,7 @@ def setup_chat(fb_client, buffr=None):
     xmpp_client = FacebookChatClient(
             chatbuff = buffr,
             myuid = my_uid,
+            store = store,
             jid = JID(my_jid),
             password = u'ignored',
             auth_methods = ['sasl:X-FACEBOOK-PLATFORM'],

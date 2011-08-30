@@ -69,13 +69,14 @@ def fill_roster(client):
     if groups:
         groupstoredict = {}
         for g in grouplist:
-            treeiter = rosterstore.append(None, [g])
+            treeiter = rosterstore.append(None, [None, g])
             groupstoredict[g] = treeiter
+            print rosterstore.get_string_from_iter(treeiter)
     for i in storearray:
         if groups:
-            rosterstore.append(groupstoredict[i[1]], [i[0]])
+            rosterstore.append(groupstoredict[i[1]], [False, i[0]])
         else:
-            rosterstore.append(None, [i])
+            rosterstore.append(None, [False, i])
 
 mainwindow = gtk.Window()
 mainwindow.set_default_size(500,500)
@@ -91,17 +92,20 @@ chathbox = gtk.HBox(False, 0)
 mainmessage = gtk.Entry()
 mainbutton = gtk.Button('Send')
 
-rosterstore = gtk.TreeStore(gobject.TYPE_STRING)
+rosterstore = gtk.TreeStore(gobject.TYPE_BOOLEAN, gobject.TYPE_STRING)
 rosterview = gtk.TreeView(rosterstore)
 rosterscroll = gtk.ScrolledWindow(None, None)
 rosterscroll.set_policy(gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC)
 rosterscroll.add(rosterview)
+onlinecell = gtk.CellRendererToggle()
 rostercell = gtk.CellRendererText()
-rostercolumn = gtk.TreeViewColumn("Friend", rostercell, text=0)
+onlinecolumn = gtk.TreeViewColumn("Online", onlinecell)
+rostercolumn = gtk.TreeViewColumn("Friend", rostercell, text=1)
 rosterview.append_column(rostercolumn)
+rosterview.append_column(onlinecolumn)
 
 client = fbchatlib.get_facebook_client()
-xmpp_client = fbchatlib.setup_chat(client, mainbuffer)
+xmpp_client = fbchatlib.setup_chat(client, mainbuffer, rosterstore)
 
 mainbutton.connect("clicked", send_message_gui)
 mainmessage.connect("activate", send_message_gui)
